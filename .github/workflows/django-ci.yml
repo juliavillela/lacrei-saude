@@ -1,0 +1,77 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.13]
+
+    services:
+      postgres:
+        image: postgres:14.19
+        env:
+          POSTGRES_DB: github_actions
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+        - 5432:5432
+
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install Poetry
+      run: pip install poetry
+
+    - name: Install dependencies
+      run: poetry install --with dev --no-root
+        
+    - name: Lint with Black
+      run: poetry run black . --check
+
+    - name: Sort imports with isort
+      run: poetry run isort . --check-only
+
+    - name: Check code with Flake8
+      run: poetry run flake8 .
+
+ 
+    - name: Run migrations
+      env:
+        DJANGO_ENV: development
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        POSTGRES_DB: github_actions
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }} # get randomly assigned published port
+      run: poetry run python manage.py migrate
+      
+    - name: Run Django tests
+      env:
+        DJANGO_ENV: development
+        SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        POSTGRES_DB: github_actions
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_HOST: localhost
+        POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }} # get randomly assigned published port
+      run: poetry run python manage.py test
