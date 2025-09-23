@@ -14,6 +14,9 @@ class Address(models.Model):
         abstract = True
 
     def formatted_address(self):
+        """"
+        Return the full address as a single formatted string.
+        """
         complement = f" {self.complement}" if self.complement else ""
         street_part = f"{self.street}, {self.number} {complement}"
         city_part = f"{self.neighborhood}, {self.city}, {self.state}"

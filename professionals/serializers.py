@@ -49,12 +49,20 @@ class ProfessionalSerializer(serializers.ModelSerializer):
         return {"phone": obj.phone, "email": obj.email}
 
     def validate_name(self, value):
+        """Strip leading and trailing whitespace from the name."""
         return value.strip()
     
     def validate_email(self, value):
+        """Normalize email to lowercase and remove leading/trailing whitespace."""
         return value.lower().strip()
     
     def validate_phone(self, value):
+        """
+        Validate and clean phone number.
+
+        Ensures the number has 10 or 11 digits (DDD + local number) and removes non-digit characters.
+        Raises ValidationError if the length is incorrect.
+        """
         clean_value = re.sub(r"[^\d]", "", value)
 
         if len(clean_value) < 10:  # DDD code + 8 digits
@@ -65,6 +73,12 @@ class ProfessionalSerializer(serializers.ModelSerializer):
         return clean_value
 
     def validate_zipcode(self, value):
+        """
+        Validate and clean zipcode (CEP).
+
+        Ensures the zipcode has exactly 8 digits. Removes non-digit characters.
+        Raises ValidationError if the length is incorrect.
+        """
         clean_value = re.sub(r"[^\d]", "", value)
 
         if len(clean_value) != 8:
