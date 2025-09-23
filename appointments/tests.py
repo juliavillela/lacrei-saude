@@ -1,12 +1,14 @@
 import datetime
-from rest_framework.test import APITestCase
+
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.test import APITestCase
 
 from professionals.models import Professional
 
 from .models import Appointment
+
 
 class AppointmentApiTest(APITestCase):
     def setUp(self):
@@ -108,6 +110,7 @@ class AppointmentApiTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Appointment.objects.count(), 0)
 
+
 class FilterApointmentByProfessionals(APITestCase):
     def setUp(self):
         self.professional_1 = Professional.objects.create(
@@ -154,7 +157,7 @@ class FilterApointmentByProfessionals(APITestCase):
         url = reverse("appointment-list") + f"?professional={self.professional_1.id}"
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         returned_ids = [appointment["id"] for appointment in response.data]
         self.assertIn(self.appointment_1.id, returned_ids)
         self.assertIn(self.appointment_2.id, returned_ids)
@@ -162,6 +165,6 @@ class FilterApointmentByProfessionals(APITestCase):
         self.assertEqual(len(returned_ids), 2)
 
     def test_filter_by_professional_raises_error_for_non_existing_id(self):
-        url = reverse("appointment-list") + f"?professional=5"
+        url = reverse("appointment-list") + "?professional=5"
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

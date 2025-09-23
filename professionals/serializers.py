@@ -86,6 +86,7 @@ class ProfessionalSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Formato de CEP inválido.")
         return clean_value
 
+
 class PartialProfessionalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Professional

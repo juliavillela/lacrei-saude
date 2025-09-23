@@ -1,5 +1,6 @@
-from rest_framework import serializers
 from django.utils import timezone
+from rest_framework import serializers
+
 from professionals.models import Professional
 from professionals.serializers import PartialProfessionalSerializer
 
@@ -25,7 +26,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def validate_scheduled_at(self, value):
         if value < timezone.now():
-            raise serializers.ValidationError("Uma consulta não pode ser marcada no passado.")
+            raise serializers.ValidationError(
+                "Uma consulta não pode ser marcada no passado."
+            )
         return value
 
     def validate(self, attrs):
@@ -36,5 +39,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             professional=professional, scheduled_at=scheduled_at
         ).exists()
         if exists:
-            raise serializers.ValidationError("Esse profissional já possui uma consulta neste horário.")
+            raise serializers.ValidationError(
+                "Esse profissional já possui uma consulta neste horário."
+            )
         return attrs
