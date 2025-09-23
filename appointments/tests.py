@@ -107,3 +107,61 @@ class AppointmentApiTest(APITestCase):
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Appointment.objects.count(), 0)
+
+class FilterApointmentByProfessionals(APITestCase):
+    def setUp(self):
+        self.professional_1 = Professional.objects.create(
+            name="Alice dos Santos",
+            profession=Professional.ProfessionChoices.GENERAL_PRACTITIONER,
+            street="Rua das Couves",
+            number="123",
+            complement="Ap. 4",
+            neighborhood="Centro",
+            city="Rio de Janeiro",
+            state="RJ",
+            zipcode="12345-678",
+            phone="211111-2222",
+            email="alice@example.com",
+        )
+
+        self.professional_2 = Professional.objects.create(
+            name="Maria da Silva",
+            profession=Professional.ProfessionChoices.GYNECOLOGIST,
+            street="Rua das Couves",
+            number="123",
+            complement="Ap. 7",
+            neighborhood="Centro",
+            city="Rio de Janeiro",
+            state="RJ",
+            zipcode="12345-678",
+            phone="211111-2222",
+            email="maria@example.com",
+        )
+        today = timezone.now() + datetime.timedelta(hours=1)
+        tomorrow = today + datetime.timedelta(days=1)
+
+        self.appointment_1 = Appointment.objects.create(
+            professional=self.professional_1, scheduled_at=today.isoformat()
+        )
+        self.appointment_2 = Appointment.objects.create(
+            professional=self.professional_1, scheduled_at=tomorrow.isoformat()
+        )
+        self.appointment_3 = Appointment.objects.create(
+            professional=self.professional_2, scheduled_at=today.isoformat()
+        )
+
+    def test_filter_by_professional(self):
+        url = reverse("appointment-list") + f"?professional={self.professional_1.id}"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        returned_ids = [appointment["id"] for appointment in response.data]
+        self.assertIn(self.appointment_1.id, returned_ids)
+        self.assertIn(self.appointment_2.id, returned_ids)
+        self.assertNotIn(self.appointment_3.id, returned_ids)
+        self.assertEqual(len(returned_ids), 2)
+
+    def test_filter_by_professional_raises_error_for_non_existing_id(self):
+        url = reverse("appointment-list") + f"?professional=5"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
