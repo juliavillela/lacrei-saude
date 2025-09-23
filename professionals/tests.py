@@ -71,7 +71,7 @@ class ProfessionalApiTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Professional.objects.count(), 2)
         created_professional = Professional.objects.last()
-        
+
         # Make sure fields were normalized and cleaned
         self.assertEqual(created_professional.name, "João da Silva")
         self.assertEqual(created_professional.phone, "11933334444")

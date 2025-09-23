@@ -14,7 +14,7 @@ class Address(models.Model):
         abstract = True
 
     def formatted_address(self):
-        """"
+        """ "
         Return the full address as a single formatted string.
         """
         complement = f" {self.complement}" if self.complement else ""

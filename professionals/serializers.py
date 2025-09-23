@@ -51,16 +51,17 @@ class ProfessionalSerializer(serializers.ModelSerializer):
     def validate_name(self, value):
         """Strip leading and trailing whitespace from the name."""
         return value.strip()
-    
+
     def validate_email(self, value):
         """Normalize email to lowercase and remove leading/trailing whitespace."""
         return value.lower().strip()
-    
+
     def validate_phone(self, value):
         """
         Validate and clean phone number.
 
-        Ensures the number has 10 or 11 digits (DDD + local number) and removes non-digit characters.
+        Ensures the number has 10 or 11 digits (DDD + local number)
+        and removes non-digit characters.
         Raises ValidationError if the length is incorrect.
         """
         clean_value = re.sub(r"[^\d]", "", value)
@@ -84,4 +85,3 @@ class ProfessionalSerializer(serializers.ModelSerializer):
         if len(clean_value) != 8:
             raise serializers.ValidationError("Formato de CEP inválido.")
         return clean_value
-    
