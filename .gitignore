@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+# Environment variables
+*.env
+# OS files
+.DS_Store
+Thumbs.db
+# Django
+db.sqlite3
+# Poetry
+poetry.lock
