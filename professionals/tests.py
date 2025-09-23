@@ -1,12 +1,23 @@
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from .models import Professional
 
+User = get_user_model()
+
 
 class ProfessionalApiTest(APITestCase):
     def setUp(self):
+        self.user = User.objects.create_user(
+            email="test@example.com", password="testpass"
+        )
+
+        self.token = Token.objects.get(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
         self.professional = Professional.objects.create(
             name="Alice dos Santos",
             profession=Professional.ProfessionChoices.GENERAL_PRACTITIONER,
