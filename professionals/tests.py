@@ -132,6 +132,24 @@ class ProfessionalApiTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Professional.objects.count(), 1)
 
+    def test_create_professional_rejects_existing_email(self):
+        data = {
+            "name": "João da Silva",
+            "profession": "PEDIATRA",
+            "street": "Rua das Couves",
+            "number": "456",
+            "complement": "",
+            "neighborhood": "Centro",
+            "city": "São Paulo",
+            "state": "SP",
+            "zipcode": "87654-3214",
+            "contact_phone": "(11)93333-4444",
+            "contact_email": "alice@example.com",
+        }
+        response = self.client.post(self.list_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Professional.objects.count(), 1)
+
     def test_update_professional(self):
         data = {"profession": "PSICOLOGO"}
         response = self.client.patch(self.detail_url, data, format="json")
