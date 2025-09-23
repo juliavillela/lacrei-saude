@@ -85,3 +85,9 @@ class ProfessionalSerializer(serializers.ModelSerializer):
         if len(clean_value) != 8:
             raise serializers.ValidationError("Formato de CEP inválido.")
         return clean_value
+
+
+class PartialProfessionalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Professional
+        fields = ["id", "name", "profession"]
