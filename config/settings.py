@@ -146,3 +146,35 @@ if DJANGO_ENV == "development":
     CORS_ALLOW_ALL_ORIGINS = True
 else:
     CORS_ALLOWED_ORIGINS = []
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "access_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": "logs/access.log",
+            "formatter": "verbose",
+        },
+        "error_file": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": "logs/error.log",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["access_file", "error_file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
+}

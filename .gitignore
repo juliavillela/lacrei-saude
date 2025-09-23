@@ -9,3 +9,6 @@ Thumbs.db
 db.sqlite3
 # Poetry
 poetry.lock
+# Logs
+logs/*
+!logs/.placeholder
