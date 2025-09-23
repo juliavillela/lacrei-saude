@@ -1,17 +1,28 @@
 import datetime
 
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
 
 from professionals.models import Professional
 
 from .models import Appointment
 
+User = get_user_model()
+
 
 class AppointmentApiTest(APITestCase):
     def setUp(self):
+        self.user = User.objects.create_user(
+            email="test@example.com", password="testpass"
+        )
+
+        self.token = Token.objects.get(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
         self.professional = Professional.objects.create(
             name="Alice dos Santos",
             profession=Professional.ProfessionChoices.GENERAL_PRACTITIONER,
@@ -113,6 +124,13 @@ class AppointmentApiTest(APITestCase):
 
 class FilterApointmentByProfessionals(APITestCase):
     def setUp(self):
+        self.user = User.objects.create_user(
+            email="test@example.com", password="testpass"
+        )
+
+        self.token = Token.objects.get(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+
         self.professional_1 = Professional.objects.create(
             name="Alice dos Santos",
             profession=Professional.ProfessionChoices.GENERAL_PRACTITIONER,
