@@ -1,0 +1,51 @@
+services:
+  python-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    ports:
+      - "8000:8000"  # Gunicorn/Django exposed port
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DJANGO_ENV: ${DJANGO_ENV}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_HOST: postgres
+    depends_on:
+      # Add external services here if needed, e.g. database
+      postgres:
+        condition: service_healthy
+        restart: true
+    networks:
+      - appnet
+    # The logs directory is handled in Dockerfile
+
+# If your Django app uses a database (e.g. PostgreSQL), add it below:
+  postgres:
+    image: postgres:14.19
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge
+
+# Uncomment if you add a database service above
+volumes:
+  postgres_data:
