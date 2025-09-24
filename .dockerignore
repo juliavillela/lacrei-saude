@@ -1,0 +1,66 @@
+# Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+
+# Django/SQLite database
+*.sqlite3
+
+# Logs and debug
+logs/
+*.log
+
+# Environment and secrets
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.crt
+
+# IDE/editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build and distribution
+build/
+dist/
+out/
+tmp/
+temp/
+*.tmp
+
+# Version control
+.git/
+.gitignore
+
+# Documentation
+*.md
+README*
+docs/
+
+# Docker and Compose files
+Dockerfile*
+docker-compose*
+
+# Local and config overrides
+.local/
+local/
+config.local.*
+*.local.yml
+
+# Test and coverage artifacts
+*.cover
+*.coverage
+
+# Miscellaneous
+*.bak
+*.orig
+
+# Exclude nothing that is required for Python/Django app to run
+# (e.g., pyproject.toml, poetry.lock, manage.py, source code, migrations, etc.)
