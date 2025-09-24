@@ -38,14 +38,18 @@ WORKDIR /app
 # Copy virtualenv and app code from builder
 COPY --link --from=builder /app /app
 
-# Ensure logs directory exists and is writable
-RUN mkdir -p logs && chown -R appuser:appuser logs
+# Ensure writable directories for logs and static files
+RUN mkdir -p logs staticfiles && chown -R appuser:appuser logs staticfiles
 
 USER appuser
 
 ENV PATH="/app/.venv/bin:$PATH"
 
 ENV DJANGO_SETTINGS_MODULE=config.settings
+
+ENV SECRET_KEY="dummy"
+
+RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
