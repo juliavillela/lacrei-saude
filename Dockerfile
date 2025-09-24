@@ -51,6 +51,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 ENV DJANGO_SETTINGS_MODULE=config.settings
 
+# Set placeholder secret key to avoid error loading settings.py
 ENV SECRET_KEY="dummy"
 
 RUN python manage.py collectstatic --noinput
