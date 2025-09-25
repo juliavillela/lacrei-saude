@@ -49,8 +49,9 @@ class AppointmentApiTest(APITestCase):
     def test_list_appointments(self):
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        first_id = response.data[0]["professional"]["id"]
+        results = response.data["results"]
+        self.assertEqual(len(results), 1)
+        first_id = results[0]["professional"]["id"]
         self.assertEqual(first_id, self.professional.id)
 
     def test_retrieve_professional(self):
@@ -176,7 +177,8 @@ class FilterApointmentByProfessionals(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        returned_ids = [appointment["id"] for appointment in response.data]
+        results = response.data["results"]
+        returned_ids = [appointment["id"] for appointment in results]
         self.assertIn(self.appointment_1.id, returned_ids)
         self.assertIn(self.appointment_2.id, returned_ids)
         self.assertNotIn(self.appointment_3.id, returned_ids)
