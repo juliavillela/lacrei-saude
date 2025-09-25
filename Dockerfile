@@ -41,10 +41,6 @@ COPY --link --from=builder /app /app
 # Ensure writable directories for logs and static files
 RUN mkdir -p logs staticfiles && chown -R appuser:appuser logs staticfiles
 
-# Copy entrypoint and make executable
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
 USER appuser
 
 ENV PATH="/app/.venv/bin:$PATH"
@@ -58,5 +54,5 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["gunicorn"]
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
+

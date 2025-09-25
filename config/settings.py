@@ -31,7 +31,12 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = DJANGO_ENV == "development"
 
-ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]
+# Expects string of comma separated values
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "")
+if ALLOWED_HOSTS:
+    ALLOWED_HOSTS = [h.strip() for h in ALLOWED_HOSTS.split(",")]
+else:
+    ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]
 
 # Application definition
 

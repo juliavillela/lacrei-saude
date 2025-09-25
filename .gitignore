@@ -13,3 +13,5 @@ poetry.lock
 # Logs
 logs/*
 !logs/.placeholder
+# Deploy zip for AWS
+deploy.zip
