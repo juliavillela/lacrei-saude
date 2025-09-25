@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: juliavillela/lacrei-saude-app:latest
     restart: unless-stopped
     init: true
     ports:
