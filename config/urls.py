@@ -16,9 +16,8 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import include, path
 from django.http import HttpResponse
-
+from django.urls import include, path
 from rest_framework import routers
 
 from appointments.views import AppointmentViewset
@@ -28,8 +27,10 @@ router = routers.DefaultRouter()
 router.register(r"professionals", ProfessionalViewSet, basename="professional")
 router.register(r"appointments", AppointmentViewset, basename="appointment")
 
+
 def healthz(_request):
     return HttpResponse("ok")
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
