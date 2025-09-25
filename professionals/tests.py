@@ -37,8 +37,9 @@ class ProfessionalApiTest(APITestCase):
     def test_list_professionals(self):
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["name"], "Alice dos Santos")
+        results = response.data["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["name"], "Alice dos Santos")
 
     def test_retrieve_professional(self):
         response = self.client.get(self.detail_url)
