@@ -1,5 +1,23 @@
+# Lacrei Saúde API
+API em Django REST para gerenciamento de profissionais de saúde e agendamento de consultas
+
+### Deploy na AWS
+
+**Ambiente de produção**: [http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/](http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/)  
+
+**Ambiente de Staging**: [http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/](http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/)  
+
+O ambiente de Staging está populado com alguns dados para teste do funcionamento da API. O ambiente de produção está com a database vazia.
+Credenciais de acesso (login via interface) para o ambiente de staging:
+- Usuário: teste@email.com
+- Senha: 1234pass
+
+Autenticação via API (Postman, Insomnia, etc.) para o ambiente de staging:
+Utilizar o token do usuário no header da requisição:
+`Authentication: Token eac9e4a5e904426d8097163e52b24f7869acdd40`
+
 ## Set Up
-#### Setup local (sem Docker)
+### Setup local (sem Docker)
 
 Clone o repositório:
 ```bash
@@ -28,7 +46,7 @@ poetry run python manage.py runserver
 ```
 
 A API estará disponível em [http://localhost:8000](http://localhost:8000).
-#### Setup via Docker
+### Setup via Docker
 
 Build da imagem:
 ```bash
@@ -40,7 +58,7 @@ Suba o container:
 docker run -p 8000:8000 api-saude
 ```
 
-#### Execução dos Testes
+### Execução dos Testes
 
 Localmente (sem Docker):
 ```bash
@@ -51,23 +69,21 @@ poetry run python manage.py test
 docker exec -it <container_id> python manage.py test
 ```
 
-###  Fluxo de Deploy (CI/CD)
+##  Fluxo de Deploy (CI/CD)
 
-O fluxo de deploy é gerenciado por **GitHub Actions**:
+O processo de deploy é gerenciado por **GitHub Actions** com integração ao **AWS Elastic Beanstalk**:
 
 - **Branches**:
-    - `main` → ambiente de desenvolvimento (roda apenas testes/lint).
-    - `staging` → deploy automático para ambiente de **staging** na AWS.
-    - `production` → deploy automático para ambiente de **produção** na AWS.
+    - `main`: ambiente de desenvolvimento. Commits nessa branch rodam **apenas testes e lint**, sem deploy.
+    - `staging`: Ao commitar nesta branch, o GitHub Actions executa **lint + testes** e realiza o **deploy automático** no ambiente de **staging** na AWS.
+    - `production`: Ao commitar nesta branch, o GitHub Actions executa **lint + testes** e realiza o **deploy automático** no ambiente de **produção** na AWS. 
 
 - **Pipeline**:
     1. Rodar testes (Black, isort, Flake8 e Django TestCase).
     2. Build da imagem Docker e push para Docker Hub.
-    3. Deploy no **Elastic Beanstalk**:
-        - `staging` → ambiente de homologação.
-        - `production` → ambiente de produção.
+    3. Deploy no Elastic Beanstalk (AWS) de acordo com a branch. 
 
-## Justificativas Técnicas
+## Justificativas Técnicas e Detalhes da implementação
 
 ### Usuário Customizado
 Escolhi implementar um modelo customizado de usuário para autenticação via email, pois considero esse fluxo mais usual e seguro do que o padrão baseado em username.
