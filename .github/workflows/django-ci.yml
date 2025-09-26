@@ -123,17 +123,17 @@ jobs:
           echo "Pinned to $IMG"
           cat Dockerrun.aws.json
 
-      - name: Create EB bundle zip
-        run: |
-          zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
-
   deploy-staging:
     name: Deploy to Elastic Beanstalk (staging)
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     steps:
-      # Deploy to Elastic Beanstalk
+
+      - name: Create EB bundle zip
+        run: |
+          zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -171,7 +171,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
     steps:
-      # Deploy to Elastic Beanstalk
+      
+      - name: Create EB bundle zip
+        run: |
+          zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
