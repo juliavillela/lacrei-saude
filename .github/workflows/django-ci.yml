@@ -52,7 +52,7 @@ jobs:
     - name: Check code with Flake8
       run: poetry run flake8 .
 
- 
+
     - name: Run migrations
       env:
         DJANGO_ENV: development
@@ -75,20 +75,19 @@ jobs:
         POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }} # get randomly assigned published port
       run: poetry run python manage.py test
   
-  build:
-    name: Build Docker image
+  deploy-staging:
+    name: staging-Build and deploy to EB
     needs: testing
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/production')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     
     env:
       DOCKER_IMAGE: juliavillela/lacrei-saude-app
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Build and push image to Docker Hub
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -112,7 +111,6 @@ jobs:
             ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
             ${{ env.DOCKER_IMAGE }}:latest
 
-      # Prepare Dockerrun bundle
       - name: Pin image tag in Dockerrun.aws.json
         run: |
           sudo apt-get update && sudo apt-get install -y jq
@@ -127,13 +125,6 @@ jobs:
         run: |
           zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
 
-  deploy-staging:
-    name: Deploy to Elastic Beanstalk (staging)
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
-    steps:
-      # Deploy to Elastic Beanstalk
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -166,12 +157,59 @@ jobs:
             --version-label "${VERSION_LABEL}"
 
   deploy-production:
-    name: Deploy to Elastic Beanstalk (production)
-    needs: build
+    name: production-Build and deploy to EB 
+    needs: testing
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+    
+    env:
+      DOCKER_IMAGE: juliavillela/lacrei-saude-app
+
     steps:
-      # Deploy to Elastic Beanstalk
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+            ${{ env.DOCKER_IMAGE }}:latest
+
+      - name: Pin image tag in Dockerrun.aws.json
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          IMG="${DOCKER_IMAGE}:${GITHUB_SHA}"
+          # Dockerrun v1 (single container) expected
+          jq --arg img "$IMG" '.Image.Name=$img' Dockerrun.aws.json > Dockerrun.generated.json
+          mv Dockerrun.generated.json Dockerrun.aws.json
+          echo "Pinned to $IMG"
+          cat Dockerrun.aws.json
+
+      - name: Create EB bundle zip
+        run: |
+          zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
+
+      - name: Create EB bundle zip
+        run: |
+          zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
