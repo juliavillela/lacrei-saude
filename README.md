@@ -17,6 +17,12 @@ Utilizar o token do usuário no header da requisição:
 `Authentication: Token eac9e4a5e904426d8097163e52b24f7869acdd40`
 
 ## Set Up
+### Pré Requisitos
+- postgres
+- Python 3.13+
+- [Poetry](https://python-poetry.org/docs/) (v2.2)
+- Docker (opcional, para rodar via container)
+
 ### Setup local (sem Docker)
 
 Clone o repositório:
@@ -25,9 +31,32 @@ git clone https://github.com/juliavillela/lacrei-saude.git
 cd lacrei-saude
 ```
 
-Instale as dependências:
+Instale as dependências e ative o ambiente virtual:
 ```bash
-poetry install
+poetry install --no-root
+poetry env activate
+```
+Criar arquivo `.env`. Este projeto utiliza variáveis de ambiente para separar configurações sensíveis (secret key, banco de dados, etc.) do código. Essas variáveis devem ficar em um arquivo `.env` na raiz do projeto. 
+Exemplo de conteúdo do arquivo:
+```
+DJANGO_ENV = development
+SECRET_KEY = fakesecretkeyq-q8lxd-ys4-@l&yw-8d39vv-qrd5kqag!%5g
+POSTGRES_DB=lacrei_saude_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+ALLOWED_HOSTS=127.0.0.1,0.0.0.0,localhost
+```
+
+Iniciar o postgres
+```bash
+brew services start postgresql
+```
+
+Criar base de dados com o mesmo nome descrito no `.env` em `POSTGRESS_DB`
+```bash
+createdb lacrei_saude_db
 ```
 
 Execute as migrações:
@@ -44,19 +73,26 @@ Rode o servidor local:
 ```bash
 poetry run python manage.py runserver
 ```
+A API estará disponível em [http://localhost:8000](http://localhost:8000). Atenção, a página de entrada é vazia, vá para `/api` para ver a API.
 
-A API estará disponível em [http://localhost:8000](http://localhost:8000).
 ### Setup via Docker
+
+Clone o repositório:
+```bash
+git clone https://github.com/juliavillela/lacrei-saude.git 
+cd lacrei-saude
+```
 
 Build da imagem:
 ```bash
-docker build -t api-saude .
+docker compose build
 ```
 
 Suba o container:
 ```bash
-docker run -p 8000:8000 api-saude
+docker compose up
 ```
+A API estará disponível em [http://0.0.0.0:8000/](http://0.0.0.0:8000/). Atenção, a página de entrada é vazia, vá para `/api` para ver a API.
 
 ### Execução dos Testes
 
