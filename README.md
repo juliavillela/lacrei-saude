@@ -83,15 +83,26 @@ Clone o repositório:
 git clone https://github.com/juliavillela/lacrei-saude.git 
 cd lacrei-saude
 ```
+Criar arquivo `.env` na raiz do projeto com um conteúdo semelhante a esse:
+```
+DJANGO_ENV = development
+SECRET_KEY = fakesecretkeyq-q8lxd-ys4-@l&yw-8d39vv-qrd5kqag!%5g
+POSTGRES_DB=lacrei_saude_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+ALLOWED_HOSTS=127.0.0.1,0.0.0.0,localhost
+```
 
 Build da imagem:
 ```bash
-docker compose build
+sudo docker compose build
 ```
 
 Suba o container:
 ```bash
-docker compose up
+sudo docker compose up
 ```
 A API estará disponível em [http://0.0.0.0:8000/](http://0.0.0.0:8000/). Atenção, a página de entrada é vazia, vá para `/api` para ver a API.
 
