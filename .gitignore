@@ -8,8 +8,6 @@ Thumbs.db
 # Django
 db.sqlite3
 /staticfiles/
-# Poetry
-poetry.lock
 # Logs
 logs/*
 !logs/.placeholder
