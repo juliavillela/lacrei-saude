@@ -76,7 +76,7 @@ jobs:
       run: poetry run python manage.py test
   
   deploy-staging:
-    name: Build and deploy to EB (staging)
+    name: staging-Build and deploy to EB
     needs: testing
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
@@ -157,7 +157,7 @@ jobs:
             --version-label "${VERSION_LABEL}"
 
   deploy-production:
-    name: Build and deploy to EB (staging)
+    name: production-Build and deploy to EB 
     needs: testing
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
