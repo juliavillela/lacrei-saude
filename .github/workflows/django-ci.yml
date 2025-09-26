@@ -112,7 +112,17 @@ jobs:
             ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
             ${{ env.DOCKER_IMAGE }}:latest
 
-      # Prepare Dockerrun bundle
+  deploy-staging:
+    name: Deploy to Elastic Beanstalk (staging)
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    
+    env:
+      DOCKER_IMAGE: juliavillela/lacrei-saude-app
+
+    steps:
+
       - name: Pin image tag in Dockerrun.aws.json
         run: |
           sudo apt-get update && sudo apt-get install -y jq
@@ -122,13 +132,6 @@ jobs:
           mv Dockerrun.generated.json Dockerrun.aws.json
           echo "Pinned to $IMG"
           cat Dockerrun.aws.json
-
-  deploy-staging:
-    name: Deploy to Elastic Beanstalk (staging)
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
-    steps:
 
       - name: Create EB bundle zip
         run: |
@@ -170,8 +173,26 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/production'
+    
+    env:
+      DOCKER_IMAGE: juliavillela/lacrei-saude-app
+
     steps:
-      
+
+      - name: Pin image tag in Dockerrun.aws.json
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          IMG="${DOCKER_IMAGE}:${GITHUB_SHA}"
+          # Dockerrun v1 (single container) expected
+          jq --arg img "$IMG" '.Image.Name=$img' Dockerrun.aws.json > Dockerrun.generated.json
+          mv Dockerrun.generated.json Dockerrun.aws.json
+          echo "Pinned to $IMG"
+          cat Dockerrun.aws.json
+
+      - name: Create EB bundle zip
+        run: |
+          zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
+
       - name: Create EB bundle zip
         run: |
           zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
