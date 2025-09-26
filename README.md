@@ -1,5 +1,5 @@
 # Lacrei Saúde API
-API em Django REST para gerenciamento de profissionais de saúde e agendamento de consultas
+API em Django REST para gerenciamento de profissionais de saúde e agendamento de consultas.
 
 ### Deploy na AWS
 
@@ -8,6 +8,7 @@ API em Django REST para gerenciamento de profissionais de saúde e agendamento d
 **Ambiente de Staging**: [http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/](http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/)  
 
 O ambiente de Staging está populado com alguns dados para teste do funcionamento da API. O ambiente de produção está com a database vazia.
+
 Credenciais de acesso (login via interface) para o ambiente de staging:
 - Usuário: teste@email.com
 - Senha: 1234pass
