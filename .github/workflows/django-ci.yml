@@ -1,4 +1,4 @@
-name: Django CI
+name: Django CI/CD
 
 on:
   push:
@@ -112,3 +112,50 @@ jobs:
           tags: |
             ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
             ${{ env.DOCKER_IMAGE }}:latest
+
+      # Prepare Dockerrun bundle
+      - name: Pin image tag in Dockerrun.aws.json
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          IMG="${DOCKER_IMAGE}:${GITHUB_SHA}"
+          # Dockerrun v1 (single container) expected
+          jq --arg img "$IMG" '.Image.Name=$img' Dockerrun.aws.json > Dockerrun.generated.json
+          mv Dockerrun.generated.json Dockerrun.aws.json
+          echo "Pinned to $IMG"
+          cat Dockerrun.aws.json
+
+      - name: Create EB bundle zip
+        run: |
+          zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
+
+      # Deploy to Elastic Beanstalk
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Upload to S3 and deploy to EB
+        env:
+          EB_APPLICATION_NAME: ${{ secrets.EB_APPLICATION_NAME }}
+          EB_ENVIRONMENT_NAME: ${{ secrets.EB_ENVIRONMENT_NAME }}
+          S3_BUCKET:           ${{ secrets.S3_BUCKET }}
+        run: |
+          set -euo pipefail
+          VERSION_LABEL="${GITHUB_SHA::8}-$(date +%Y%m%d%H%M%S)"
+          S3_KEY="eb/${VERSION_LABEL}/deploy.zip"
+
+          echo "Uploading deploy.zip to s3://${S3_BUCKET}/${S3_KEY}"
+          aws s3 cp deploy.zip "s3://${S3_BUCKET}/${S3_KEY}"
+
+          echo "Creating EB application version: ${VERSION_LABEL}"
+          aws elasticbeanstalk create-application-version \
+            --application-name "${EB_APPLICATION_NAME}" \
+            --version-label "${VERSION_LABEL}" \
+            --source-bundle S3Bucket="${S3_BUCKET}",S3Key="${S3_KEY}"
+
+          echo "Updating environment ${EB_ENVIRONMENT_NAME} to ${VERSION_LABEL}"
+          aws elasticbeanstalk update-environment \
+            --environment-name "${EB_ENVIRONMENT_NAME}" \
+            --version-label "${VERSION_LABEL}"
