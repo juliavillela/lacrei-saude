@@ -1,5 +1,9 @@
 name: Django CI/CD
 
+permissions:
+  contents: write
+  actions: read
+
 on:
   push:
     branches: [ "main", "staging", "production" ]
@@ -124,6 +128,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ github.token }}
           tag_name: staging-${{ github.sha }}
           name: "Staging Deploy ${{ github.sha }}"
           body: |
