@@ -121,6 +121,18 @@ jobs:
           echo "Pinned to $IMG"
           cat Dockerrun.aws.json
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: staging-${{ github.sha }}
+          name: "Staging Deploy ${{ github.sha }}"
+          body: |
+            Deploy automático da aplicação.
+            - Commit: ${{ github.sha }}
+            - Autor: ${{ github.actor }}
+          files: |
+            Dockerrun.aws.json
+
       - name: Create EB bundle zip
         run: |
           zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
@@ -202,6 +214,18 @@ jobs:
           echo "Pinned to $IMG"
           cat Dockerrun.aws.json
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: production-${{ github.sha }}
+          name: "Production Deploy ${{ github.sha }}"
+          body: |
+            Deploy automático da aplicação.
+            - Commit: ${{ github.sha }}
+            - Autor: ${{ github.actor }}
+          files: |
+            Dockerrun.aws.json
+            
       - name: Create EB bundle zip
         run: |
           zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
