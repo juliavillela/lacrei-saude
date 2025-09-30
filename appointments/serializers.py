@@ -32,14 +32,25 @@ class AppointmentSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        professional = attrs.get("professional")
-        scheduled_at = attrs.get("scheduled_at")
+        instance = getattr(self, "instance", None)
 
-        exists = Appointment.objects.filter(
+        professional = attrs.get("professional") or (
+            instance.professional if instance else None
+        )
+        scheduled_at = attrs.get("scheduled_at") or (
+            instance.scheduled_at if instance else None
+        )
+
+        qs = Appointment.objects.filter(
             professional=professional, scheduled_at=scheduled_at
-        ).exists()
-        if exists:
+        )
+
+        if instance:
+            qs = qs.exclude(id=instance.id)
+
+        if qs.exists():
             raise serializers.ValidationError(
                 "Esse profissional já possui uma consulta neste horário."
             )
+
         return attrs
