@@ -54,7 +54,7 @@ class AppointmentApiTest(APITestCase):
         first_id = results[0]["professional"]["id"]
         self.assertEqual(first_id, self.professional.id)
 
-    def test_retrieve_professional(self):
+    def test_retrieve_appointment(self):
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         response_id = response.data["professional"]["id"]
@@ -66,6 +66,11 @@ class AppointmentApiTest(APITestCase):
 
         # Write only fields are not included
         self.assertNotIn("professional_id", response.data)
+
+    def test_retrieve_appointment_not_found(self):
+        url = reverse("appointment-detail", args=[999])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_appointment(self):
         now = timezone.now()
@@ -79,6 +84,14 @@ class AppointmentApiTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Appointment.objects.count(), 2)
         self.assertEqual(Appointment.objects.last().professional, self.professional)
+
+    def test_create_appointment_rejects_missing_required_fields(self):
+        data = {}
+        response = self.client.post(self.list_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("professional_id", response.data)
+        self.assertIn("scheduled_at", response.data)
+        self.assertEqual(Appointment.objects.count(), 1)
 
     def test_create_appointment_rejects_scheduled_at_in_the_past(self):
         now = timezone.now()
@@ -117,10 +130,97 @@ class AppointmentApiTest(APITestCase):
             datetime.datetime.fromisoformat("2025-10-01T08:00:00Z"),
         )
 
+    def test_update_appointment_with_no_data_changes_nothing(self):
+        data = {}
+        response = self.client.patch(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.scheduled_at, self.time)
+        self.assertEqual(self.appointment.professional, self.professional)
+
+    def test_update_appointment_rejects_empty_required_fields(self):
+        data = {"professional_id": ""}
+        response = self.client.patch(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("professional_id", response.data)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.professional, self.professional)
+
+    def test_update_appointment_rejects_non_existing_professional_id(self):
+        data = {"professional_id": 999}
+        response = self.client.patch(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.professional, self.professional)
+
+    def test_update_appointment_rejects_scheduled_at_in_the_past(self):
+        now = timezone.now()
+        yesterday = now - datetime.timedelta(days=1)
+        data = {"scheduled_at": yesterday.isoformat()}
+        response = self.client.patch(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.scheduled_at, self.time)
+
+    def test_update_appointment_rejects_double_booking(self):
+        # Create another appointment at a different time
+        another_time = self.time + datetime.timedelta(hours=1)
+        Appointment.objects.create(
+            professional=self.professional, scheduled_at=another_time
+        )
+        # Try to update the first appointment to the same time as the second
+        data = {"scheduled_at": another_time.isoformat()}
+        response = self.client.patch(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.scheduled_at, self.time)
+
+        # Create an appointment with a different professional at the same time
+        another_professional = Professional.objects.create(
+            name="Ana Pereira",
+            profession=Professional.ProfessionChoices.DERMATOLOGIST,
+            street="Rua das Flores",
+            number="789",
+            complement="Ap. 10",
+            neighborhood="Jardim",
+            city="São Paulo",
+            state="SP",
+            zipcode="98765432",
+            phone="3199998888",
+            email="ana@email.com",
+        )
+        Appointment.objects.create(
+            professional=another_professional, scheduled_at=self.time
+        )
+
+        # Try to update the first appointment to the same professional as the second
+        data = {"professional_id": another_professional.id}
+        response = self.client.patch(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.professional, self.professional)
+
+    def test_update_appointment_not_found(self):
+        url = reverse("appointment-detail", args=[999])
+        data = {"scheduled_at": "2025-10-01T08:00:00Z"}
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_delete_appointment(self):
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(Appointment.objects.count(), 0)
+
+    def test_delete_appointment_not_found(self):
+        url = reverse("appointment-detail", args=[999])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Appointment.objects.count(), 1)
+
+    def test_unauthenticated_access(self):
+        self.client.credentials()
+        response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class FilterApointmentByProfessionals(APITestCase):
