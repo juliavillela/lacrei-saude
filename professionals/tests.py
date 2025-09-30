@@ -114,7 +114,7 @@ class ProfessionalApiTest(APITestCase):
         self.assertIn("name", response.data)
         self.assertIn("profession", response.data)
         self.assertIn("email", response.data)
-        self.assertNotIn("complement", response.data) # Not required
+        self.assertNotIn("complement", response.data)  # Not required
         self.assertEqual(Professional.objects.count(), 1)
 
     def test_create_professional_rejects_invalid_profession(self):
@@ -187,7 +187,7 @@ class ProfessionalApiTest(APITestCase):
         self.assertIn("name", response.data)
         self.professional.refresh_from_db()
         self.assertEqual(self.professional.name, "Alice dos Santos")
-    
+
     def test_update_professional_not_found(self):
         url = reverse("professional-detail", args=[999])
         data = {"profession": "PSICOLOGO"}
