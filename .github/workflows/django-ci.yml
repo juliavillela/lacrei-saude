@@ -143,7 +143,7 @@ jobs:
             Deploy automático da aplicação.
             - Commit: ${{ github.sha }}
             - Autor: ${{ github.actor }}
-            - EB Version: ${{ steps.meta.outputs.version_label }}
+            - EB Version: `${{ steps.meta.outputs.version_label }}`
             - S3 Key: ${{ env.S3_KEY }}
 
           files: |
@@ -244,7 +244,7 @@ jobs:
             Deploy automático da aplicação.
             - Commit: ${{ github.sha }}
             - Autor: ${{ github.actor }}
-            - EB Version: ${{ steps.meta.outputs.version_label }}
+            - EB Version: `${{ steps.meta.outputs.version_label }}`
             - S3 Key: ${{ env.S3_KEY }}
 
           files: |
