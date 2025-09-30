@@ -141,6 +141,12 @@ class ProfessionalApiTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Professional.objects.count(), 1)
 
+    def test_create_professional_rejects_zip_code_too_short(self):
+        data = self.make_professional_data(zipcode="87654-32")
+        response = self.client.post(self.list_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Professional.objects.count(), 1)
+
     def test_create_professional_rejects_existing_email(self):
         data = self.make_professional_data(email=self.professional.email)
         response = self.client.post(self.list_url, data, format="json")
