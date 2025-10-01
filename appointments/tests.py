@@ -121,13 +121,14 @@ class AppointmentApiTest(APITestCase):
         self.assertEqual(Appointment.objects.count(), 1)
 
     def test_update_appointment(self):
-        data = {"scheduled_at": "2025-10-01T08:00:00Z"}
+        tomorrow = timezone.now() + datetime.timedelta(days=1)
+        data = {"scheduled_at": tomorrow.isoformat()}
         response = self.client.patch(self.detail_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.appointment.refresh_from_db()
         self.assertEqual(
             self.appointment.scheduled_at,
-            datetime.datetime.fromisoformat("2025-10-01T08:00:00Z"),
+            tomorrow,
         )
 
     def test_update_appointment_with_no_data_changes_nothing(self):
@@ -201,8 +202,9 @@ class AppointmentApiTest(APITestCase):
         self.assertEqual(self.appointment.professional, self.professional)
 
     def test_update_appointment_not_found(self):
+        tomorrow = timezone.now() + datetime.timedelta(days=1)
         url = reverse("appointment-detail", args=[999])
-        data = {"scheduled_at": "2025-10-01T08:00:00Z"}
+        data = {"scheduled_at": tomorrow.isoformat()}
         response = self.client.patch(url, data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
