@@ -226,7 +226,7 @@ class ProfessionalApiTest(APITestCase):
         self.assertIn("email", response.data)
         self.professional.refresh_from_db()
         self.assertEqual(self.professional.email, "alice@example.com")
-    
+
     def test_update_professional_rejects_invalid_zip_code(self):
         short_zipcode_data = {"zipcode": "87654-32"}
         response = self.client.patch(self.detail_url, short_zipcode_data, format="json")
@@ -241,7 +241,7 @@ class ProfessionalApiTest(APITestCase):
         self.assertIn("zipcode", response.data)
         self.professional.refresh_from_db()
         self.assertEqual(self.professional.zipcode, "12345678")
-    
+
     def test_update_professional_rejects_invalid_phone_number(self):
         short_phone_data = {"phone": "(11)3333-444"}
         response = self.client.patch(self.detail_url, short_phone_data, format="json")
@@ -257,14 +257,13 @@ class ProfessionalApiTest(APITestCase):
         self.professional.refresh_from_db()
         self.assertEqual(self.professional.phone, "2111112222")
 
-
     def test_full_update_professional(self):
         data = self.make_professional_data(
             name=" Maria Oliveira ",
             phone="(21) 99999-8888 ",
             zipcode="12345-678 ",
             email="  MARIA@EXAMPLE.COM  ",
-            )
+        )
         response = self.client.put(self.detail_url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.professional.refresh_from_db()
@@ -272,7 +271,7 @@ class ProfessionalApiTest(APITestCase):
         self.assertEqual(self.professional.phone, "21999998888")
         self.assertEqual(self.professional.zipcode, "12345678")
         self.assertEqual(self.professional.email, "maria@example.com")
-    
+
     def test_full_update_professional_requres_all_fields(self):
         data = self.make_professional_data()
         del data["profession"]
@@ -292,8 +291,11 @@ class ProfessionalApiTest(APITestCase):
         self.assertIn("name", response.data)
         self.professional.refresh_from_db()
         self.assertEqual(self.professional.name, "Alice dos Santos")
-        self.assertEqual(self.professional.profession, Professional.ProfessionChoices.GENERAL_PRACTITIONER)
-        
+        self.assertEqual(
+            self.professional.profession,
+            Professional.ProfessionChoices.GENERAL_PRACTITIONER,
+        )
+
     def test_full_update_professional_not_found(self):
         url = reverse("professional-detail", args=[999])
         data = self.make_professional_data()
@@ -386,22 +388,22 @@ class ProfessionalApiTest(APITestCase):
         self.client.credentials()
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_unauthenticated_post_requires_auth(self):
         self.client.credentials()
         response = self.client.post(self.list_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_unauthenticated_patch_requires_auth(self):
         self.client.credentials()
         response = self.client.patch(self.detail_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_unauthenticated_put_requires_auth(self):
         self.client.credentials()
         response = self.client.put(self.detail_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_unauthenticated_delete_requires_auth(self):
         self.client.credentials()
         response = self.client.delete(self.detail_url)

@@ -62,7 +62,7 @@ class AppointmentApiTest(APITestCase):
         self.assertEqual(len(results), 1)
         item = results[0]
         self.assertEqual(item["id"], self.appointment.id)
-        
+
         professional = item["professional"]
         for field in self.professional_read_only_fields:
             self.assertIn(field, professional)
@@ -73,7 +73,7 @@ class AppointmentApiTest(APITestCase):
     def test_retrieve_appointment(self):
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         professional = response.data["professional"]
         self.assertEqual(professional["id"], self.professional.id)
 
@@ -237,7 +237,7 @@ class AppointmentApiTest(APITestCase):
             zipcode="87654321",
             phone="4198887777",
             email="tereza@email.com",
-        )        
+        )
         tomorrow = timezone.now() + datetime.timedelta(days=1)
         data = {
             "professional_id": other_professional.id,
@@ -261,10 +261,10 @@ class AppointmentApiTest(APITestCase):
         self.appointment.refresh_from_db()
         self.assertEqual(self.appointment.scheduled_at, self.time)
         self.assertEqual(self.appointment.professional, self.professional)
-    
+
     def test_full_update_appointment_rejects_empty_required_fields(self):
         later_today = timezone.now() + datetime.timedelta(hours=1)
-        data = {"professional_id":"", "scheduled_at":later_today.isoformat()}
+        data = {"professional_id": "", "scheduled_at": later_today.isoformat()}
         response = self.client.put(self.detail_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.appointment.refresh_from_db()
@@ -282,7 +282,7 @@ class AppointmentApiTest(APITestCase):
         yesterday = timezone.now() - datetime.timedelta(days=1)
         data = {
             "professional_id": self.professional.id,
-            "scheduled_at": yesterday.isoformat()
+            "scheduled_at": yesterday.isoformat(),
         }
         response = self.client.put(self.detail_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -324,10 +324,7 @@ class AppointmentApiTest(APITestCase):
         )
 
         # Try to update the first appointment to the same professional as the second
-        data = {
-            "professional_id": another_professional.id,
-            "scheduled_at": self.time
-            }
+        data = {"professional_id": another_professional.id, "scheduled_at": self.time}
         response = self.client.patch(self.detail_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.appointment.refresh_from_db()
@@ -342,7 +339,7 @@ class AppointmentApiTest(APITestCase):
         }
         response = self.client.put(url, data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        
+
     def test_delete_appointment(self):
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -363,22 +360,22 @@ class AppointmentApiTest(APITestCase):
         self.client.credentials()
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_unauthenticated_post_requires_auth(self):
         self.client.credentials()
         response = self.client.post(self.list_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_unauthenticated_patch_requires_auth(self):
         self.client.credentials()
         response = self.client.patch(self.detail_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_unauthenticated_put_requires_auth(self):
         self.client.credentials()
         response = self.client.put(self.detail_url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_unauthenticated_delete_requires_auth(self):
         self.client.credentials()
         response = self.client.delete(self.detail_url)
@@ -425,13 +422,13 @@ class FilterApointmentByProfessionals(APITestCase):
         tomorrow = today + datetime.timedelta(days=1)
 
         self.appointment_1 = Appointment.objects.create(
-            professional=self.professional_1, scheduled_at=today.isoformat()
+            professional=self.professional_1, scheduled_at=today
         )
         self.appointment_2 = Appointment.objects.create(
-            professional=self.professional_1, scheduled_at=tomorrow.isoformat()
+            professional=self.professional_1, scheduled_at=tomorrow
         )
         self.appointment_3 = Appointment.objects.create(
-            professional=self.professional_2, scheduled_at=today.isoformat()
+            professional=self.professional_2, scheduled_at=today
         )
 
     def test_filter_by_professional(self):
