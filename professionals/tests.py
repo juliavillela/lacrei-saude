@@ -204,6 +204,17 @@ class ProfessionalApiTest(APITestCase):
             Professional.ProfessionChoices.GENERAL_PRACTITIONER,
         )
 
+    def test_update_professional_rejects_existing_email(self):
+        repeated_email = "repeated@email.com"
+        other_professional = self.make_professional_data(email=repeated_email)
+        Professional.objects.create(**other_professional)
+        data = {"email": repeated_email}
+        response = self.client.patch(self.detail_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.email, "alice@example.com")
+        
     def test_full_update_professional(self):
         data = self.make_professional_data(
             name=" Maria Oliveira ",
@@ -236,7 +247,7 @@ class ProfessionalApiTest(APITestCase):
         data = self.make_professional_data()
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        
+
     def test_delete_professional(self):
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
