@@ -283,9 +283,34 @@ class AppointmentApiTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(Appointment.objects.count(), 1)
 
-    def test_unauthenticated_access(self):
+    def test_unauthenticated_get_detail_requires_auth(self):
+        self.client.credentials()
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_unauthenticated_get_list_requires_auth(self):
         self.client.credentials()
         response = self.client.get(self.list_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_unauthenticated_post_requires_auth(self):
+        self.client.credentials()
+        response = self.client.post(self.list_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_unauthenticated_patch_requires_auth(self):
+        self.client.credentials()
+        response = self.client.patch(self.detail_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_unauthenticated_put_requires_auth(self):
+        self.client.credentials()
+        response = self.client.put(self.detail_url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+    def test_unauthenticated_delete_requires_auth(self):
+        self.client.credentials()
+        response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
