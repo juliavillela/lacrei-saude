@@ -226,7 +226,38 @@ class ProfessionalApiTest(APITestCase):
         self.assertIn("email", response.data)
         self.professional.refresh_from_db()
         self.assertEqual(self.professional.email, "alice@example.com")
-        
+    
+    def test_update_professional_rejects_invalid_zip_code(self):
+        short_zipcode_data = {"zipcode": "87654-32"}
+        response = self.client.patch(self.detail_url, short_zipcode_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("zipcode", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.zipcode, "12345678")
+
+        long_zipcode_data = {"zipcode": "87654-3219"}
+        response = self.client.patch(self.detail_url, long_zipcode_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("zipcode", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.zipcode, "12345678")
+    
+    def test_update_professional_rejects_invalid_phone_number(self):
+        short_phone_data = {"phone": "(11)3333-444"}
+        response = self.client.patch(self.detail_url, short_phone_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("phone", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.phone, "2111112222")
+
+        long_phone_data = {"phone": "(11)93333-44445"}
+        response = self.client.patch(self.detail_url, long_phone_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("phone", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.phone, "2111112222")
+
+
     def test_full_update_professional(self):
         data = self.make_professional_data(
             name=" Maria Oliveira ",
@@ -254,11 +285,86 @@ class ProfessionalApiTest(APITestCase):
             Professional.ProfessionChoices.GENERAL_PRACTITIONER,
         )
 
+    def test_full_update_professional_rejects_empty_required_fields(self):
+        data = self.make_professional_data(name="")
+        response = self.client.put(self.detail_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("name", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.name, "Alice dos Santos")
+        self.assertEqual(self.professional.profession, Professional.ProfessionChoices.GENERAL_PRACTITIONER)
+        
     def test_full_update_professional_not_found(self):
         url = reverse("professional-detail", args=[999])
         data = self.make_professional_data()
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_full_update_professional_rejects_invalid_profession(self):
+        data = self.make_professional_data(name="Outro Nome", profession="INVALID")
+        response = self.client.put(self.detail_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.professional.refresh_from_db()
+        self.assertEqual(
+            self.professional.profession,
+            Professional.ProfessionChoices.GENERAL_PRACTITIONER,
+        )
+        self.assertEqual(self.professional.name, "Alice dos Santos")
+
+    def test_full_update_professional_rejects_existing_email(self):
+        repeated_email = "repeated@email.com"
+        other_professional = self.make_professional_data(email=repeated_email)
+        Professional.objects.create(**other_professional)
+        data = {
+            "name": "Alice dos Santos",
+            "profession": Professional.ProfessionChoices.GENERAL_PRACTITIONER,
+            "street": "Rua das Couves",
+            "number": "123",
+            "complement": "Ap. 4",
+            "neighborhood": "Centro",
+            "city": "Rio de Janeiro",
+            "state": "RJ",
+            "zipcode": "12345678",
+            "phone": "2111112222",
+            "email": repeated_email,
+        }
+        response = self.client.put(self.detail_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.email, "alice@example.com")
+
+    def test_full_update_professional_rejects_invalid_zip_code(self):
+        short_zipcode_data = self.make_professional_data(zipcode="87654-32")
+        response = self.client.put(self.detail_url, short_zipcode_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("zipcode", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.zipcode, "12345678")
+        self.assertEqual(self.professional.name, "Alice dos Santos")
+
+        long_zipcode_data = self.make_professional_data(zipcode="87654-3219")
+        response = self.client.put(self.detail_url, long_zipcode_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("zipcode", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.zipcode, "12345678")
+        self.assertEqual(self.professional.name, "Alice dos Santos")
+
+    def test_full_update_professional_rejects_invalid_phone_number(self):
+        short_phone_data = self.make_professional_data(phone="(11)3333-444")
+        response = self.client.put(self.detail_url, short_phone_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("phone", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.phone, "2111112222")
+
+        long_phone_data = self.make_professional_data(phone="(11)93333-44445")
+        response = self.client.patch(self.detail_url, long_phone_data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("phone", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.phone, "2111112222")
 
     def test_delete_professional(self):
         response = self.client.delete(self.detail_url)
