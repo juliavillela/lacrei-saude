@@ -1,0 +1,61 @@
+name: EB Rollback
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        type: choice
+        options: [staging, production]
+        required: true
+      version_label:
+        description: "EB Version Label to roll back to (e.g., a1b2c3d4-20250930124059)"
+        required: true
+        
+permissions:
+  contents: read
+  
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+
+      - name: Resolve target EB environment
+        id: envname
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            echo "name=${{ secrets.EB_PRODUCTION_ENVIRONMENT_NAME }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "name=${{ secrets.EB_STAGING_ENVIRONMENT_NAME }}" >> "$GITHUB_OUTPUT"
+          fi
+          
+      - name: Verify version exists
+        run: |
+          set -euo pipefail
+          APP_NAME="${{ secrets.EB_APPLICATION_NAME }}"
+          VERSION="${{ github.event.inputs.version_label }}"
+          echo "Checking if EB application version exists: ${VERSION}"
+          aws elasticbeanstalk describe-application-versions \
+            --application-name "$APP_NAME" \
+            --version-labels "$VERSION" \
+            --query 'ApplicationVersions[0].VersionLabel' \
+            --output text | grep -q "$VERSION" \
+            || { echo "::error::Version $VERSION not found in EB application $APP_NAME"; exit 1; }
+
+      - name: Roll back environment
+        run: |
+          set -euo pipefail
+          EB_ENV="${{ steps.envname.outputs.name }}"
+          VERSION="${{ github.event.inputs.version_label }}"
+          echo "Updating environment $EB_ENV to version $VERSION"
+          aws elasticbeanstalk update-environment \
+            --environment-name "$EB_ENV" \
+            --version-label "$VERSION"
+          echo "Rollback requested. Monitor health/events in the EB console."

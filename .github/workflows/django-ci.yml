@@ -1,5 +1,9 @@
 name: Django CI/CD
 
+permissions:
+  contents: write
+  actions: read
+
 on:
   push:
     branches: [ "main", "staging", "production" ]
@@ -121,6 +125,30 @@ jobs:
           echo "Pinned to $IMG"
           cat Dockerrun.aws.json
 
+      - name: Compute deploy metadata
+        id: meta
+        run: |
+          VERSION_LABEL="${GITHUB_SHA::8}-$(date +%Y%m%d%H%M%S)"
+          echo "version_label=$VERSION_LABEL" >> "$GITHUB_OUTPUT"
+          echo "VERSION_LABEL=$VERSION_LABEL" >> "$GITHUB_ENV"
+          echo "S3_KEY=eb/${VERSION_LABEL}/deploy.zip" >> "$GITHUB_ENV"
+        
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ github.token }}
+          tag_name: staging-${{ github.sha }}
+          name: "Staging Deploy ${{ steps.meta.outputs.version_label }}"
+          body: |
+            Deploy automático da aplicação.
+            - Commit: ${{ github.sha }}
+            - Autor: ${{ github.actor }}
+            - EB Version: `${{ steps.meta.outputs.version_label }}`
+            - S3 Key: ${{ env.S3_KEY }}
+
+          files: |
+            Dockerrun.aws.json
+
       - name: Create EB bundle zip
         run: |
           zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
@@ -139,9 +167,6 @@ jobs:
           S3_BUCKET:           ${{ secrets.S3_BUCKET }}
         run: |
           set -euo pipefail
-          VERSION_LABEL="${GITHUB_SHA::8}-$(date +%Y%m%d%H%M%S)"
-          S3_KEY="eb/${VERSION_LABEL}/deploy.zip"
-
           echo "Uploading deploy.zip to s3://${S3_BUCKET}/${S3_KEY}"
           aws s3 cp deploy.zip "s3://${S3_BUCKET}/${S3_KEY}"
 
@@ -202,10 +227,29 @@ jobs:
           echo "Pinned to $IMG"
           cat Dockerrun.aws.json
 
-      - name: Create EB bundle zip
+      - name: Compute deploy metadata
+        id: meta
         run: |
-          zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
+          VERSION_LABEL="${GITHUB_SHA::8}-$(date +%Y%m%d%H%M%S)"
+          echo "version_label=$VERSION_LABEL" >> "$GITHUB_OUTPUT"
+          echo "VERSION_LABEL=$VERSION_LABEL" >> "$GITHUB_ENV"
+          echo "S3_KEY=eb/${VERSION_LABEL}/deploy.zip" >> "$GITHUB_ENV"
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: production-${{ github.sha }}
+          name: "Production Deploy ${{ steps.meta.outputs.version_label }}"
+          body: |
+            Deploy automático da aplicação.
+            - Commit: ${{ github.sha }}
+            - Autor: ${{ github.actor }}
+            - EB Version: `${{ steps.meta.outputs.version_label }}`
+            - S3 Key: ${{ env.S3_KEY }}
+
+          files: |
+            Dockerrun.aws.json
+            
       - name: Create EB bundle zip
         run: |
           zip -r deploy.zip Dockerrun.aws.json .platform -x "**/.DS_Store"
@@ -224,9 +268,6 @@ jobs:
           S3_BUCKET:           ${{ secrets.S3_BUCKET }}
         run: |
           set -euo pipefail
-          VERSION_LABEL="${GITHUB_SHA::8}-$(date +%Y%m%d%H%M%S)"
-          S3_KEY="eb/${VERSION_LABEL}/deploy.zip"
-
           echo "Uploading deploy.zip to s3://${S3_BUCKET}/${S3_KEY}"
           aws s3 cp deploy.zip "s3://${S3_BUCKET}/${S3_KEY}"
 
