@@ -43,29 +43,45 @@ class AppointmentApiTest(APITestCase):
             professional=self.professional, scheduled_at=self.time
         )
 
+        self.professional_read_only_fields = ["id", "name", "profession"]
+        self.professional_write_only_fields = ["professional_id"]
+
         self.list_url = reverse("appointment-list")
         self.detail_url = reverse("appointment-detail", args=[self.appointment.id])
 
     def test_list_appointments(self):
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Pagination fields are present
+        self.assertIn("count", response.data)
+        self.assertIn("next", response.data)
+        self.assertIn("previous", response.data)
+
+        self.assertIn("results", response.data)
         results = response.data["results"]
         self.assertEqual(len(results), 1)
-        first_id = results[0]["professional"]["id"]
-        self.assertEqual(first_id, self.professional.id)
+        item = results[0]
+        self.assertEqual(item["id"], self.appointment.id)
+        
+        professional = item["professional"]
+        for field in self.professional_read_only_fields:
+            self.assertIn(field, professional)
+
+        for field in self.professional_write_only_fields:
+            self.assertNotIn(field, professional)
 
     def test_retrieve_appointment(self):
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        response_id = response.data["professional"]["id"]
-        self.assertEqual(response_id, self.professional.id)
+        
+        professional = response.data["professional"]
+        self.assertEqual(professional["id"], self.professional.id)
 
-        # Read only fields are included
-        self.assertIn("name", response.data["professional"])
-        self.assertIn("profession", response.data["professional"])
+        for field in self.professional_read_only_fields:
+            self.assertIn(field, professional)
 
-        # Write only fields are not included
-        self.assertNotIn("professional_id", response.data)
+        for field in self.professional_write_only_fields:
+            self.assertNotIn(field, professional)
 
     def test_retrieve_appointment_not_found(self):
         url = reverse("appointment-detail", args=[999])
