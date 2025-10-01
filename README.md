@@ -1,140 +1,214 @@
-# Lacrei Saúde API
-API em Django REST para gerenciamento de profissionais de saúde e agendamento de consultas.
+## Descrição
 
-### Deploy na AWS
+API em Django REST para gerenciamento de profissionais de saúde e agendamento de consultas desenvolvida para processo seletivo da Lacrei Saúde. 
+### Features
+- Cadastro e gerenciamento de profissionais de saúde
+- Cadastro e gerenciamento de consultas + filtro de consultas por profissional.
+- Autenticação via token simples.
+### Tecnologias utilizadas
 
-**Ambiente de produção**: [http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/](http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/)  
+- **Django** e **Django REST Framework**
+- **PostgreSQL**
+- **Docker** e **Docker Compose**
+- **Poetry** (gerenciamento de dependências)
+- **GitHub Actions** (CI/CD e Rollback)
+- **AWS Elastic Beanstalk**  e **Amazon RDS** (deploy)
+- **Linters**: Black, isort, Flake8
+- **Testes**: ApiTestCase
+- **Documentação**: Swagger e drf-spectacular
 
-**Ambiente de Staging**: [http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/](http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/)  
+## Deploy funcional
 
-O ambiente de Staging está populado com alguns dados para teste do funcionamento da API. O ambiente de produção está com a database vazia.
+#### Ambiente de produção
+O ambiente de produção está com o **banco de dados vazio**.
+- **API base**:  
+    [http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/](http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/)
+- **Documentação**
+    - **Swagger UI**: [http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/docs/](http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/docs/)
+    - **Redoc**:[http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/docs/](http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/redoc/)
+    - **OpenAPI (schema JSON)**: http://lacrei-saude-production.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/schema/
 
-Credenciais de acesso (login via interface) para o ambiente de staging:
-- Usuário: teste@email.com
-- Senha: 1234pass
+#### Ambiente de staging
+O **ambiente de staging** já contém dados fictícios para testes.
+- **API base**:  
+    [http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/](http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/)
+- **Documentação**
+    - **Swagger UI**: [http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/docs/](http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/docs/)
+    - **Redoc**: [http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/redoc/](http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/redoc/)
+    - **OpenAPI (schema JSON)**: http://lacrei-saude-staging.eba-hz6k8hw7.us-east-2.elasticbeanstalk.com/api/schema/
 
-Autenticação via API (Postman, Insomnia, etc.) para o ambiente de staging:
-Utilizar o token do usuário no header da requisição:
-`Authentication: Token eac9e4a5e904426d8097163e52b24f7869acdd40`
+####  Autenticação (todos os endpoints são protegidos)
+Você pode autenticar **pela interface da api** (Rest-Framework) ou **através de um Token** de usuário.
 
-## Set Up
-### Pré Requisitos
-- postgres
-- Python 3.13+
-- [Poetry](https://python-poetry.org/docs/) (v2.2)
-- Docker (opcional, para rodar via container)
+1) **Login pela interface (staging).** Use as credenciais de teste para entrar pelo link da API (canto superior direito “Login”):
+	- Usuário: `teste@email.com`
+	- Senha: `1234pass`
 
-### Setup local (sem Docker)
+2) **Token via API (staging)**. Para chamadas HTTP diretas, utilize o token no **header**:
+```
+Authorization: Token eac9e4a5e904426d8097163e52b24f7869acdd40
+```
 
-Clone o repositório:
+3) **Swagger UI**  utilizar os mesmos credenciais
+	- Se você estiver logado pela inteface, conseguirá testar todos os endpoints
+	- Caso contrário, clique em "Authenticate" e informe o token acima,
+
+## Rodando o aplicativo em sua máquina
+Para rodar o aplicativo localmente siga os passos abaixo. 
+#### Pré requisitos
+- **Python 3.13+**
+- **Postgres**
+- **Poetry** (v2.2)
+- **Docker**: Opcional, para rodar o aplicativo via container.
+#### Opção 1: set up local (sem o Docker)
+
+1. **Clone esse repositório**: para ter o código em sua máquina clone o repositório usando o comando abaixo.
 ```bash
 git clone https://github.com/juliavillela/lacrei-saude.git 
+```
+
+2. **Vá para a pasta raiz do projeto**
+```bash
 cd lacrei-saude
 ```
 
-Instale as dependências e ative o ambiente virtual:
+3. **Instale as dependências** e **ative o ambiente virtual**: use o poetry para instalar as dependências e em seguida ative o ambiente virtual pra rodar o aplicativo utilizando ele
 ```bash
 poetry install --no-root
 poetry env activate
 ```
-Criar arquivo `.env`. Este projeto utiliza variáveis de ambiente para separar configurações sensíveis (secret key, banco de dados, etc.) do código. Essas variáveis devem ficar em um arquivo `.env` na raiz do projeto. 
-Exemplo de conteúdo do arquivo:
-```
-DJANGO_ENV = development
-SECRET_KEY = fakesecretkeyq-q8lxd-ys4-@l&yw-8d39vv-qrd5kqag!%5g
-POSTGRES_DB=lacrei_saude_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-ALLOWED_HOSTS=127.0.0.1,0.0.0.0,localhost
+
+4. **Configure as variáveis de ambiente**: Copie o arquivo de exemplo `.env.example` para criar seu `.env` local. Se necessário, ajuste os valores das variáveis.
+```bash
+# macOS / Linux
+cp .env.example .env
 ```
 
-Iniciar o postgres
+```bash
+# Windows
+copy .env.example .env
+```
+
+5. **Inicie o postgres**: 
 ```bash
 brew services start postgresql
 ```
 
-Criar base de dados com o mesmo nome descrito no `.env` em `POSTGRESS_DB`
+6. **Crie uma base de dados**: com o postgres inicie uma base de dados com o mesmo nome descrito no `.env`
 ```bash
 createdb lacrei_saude_db
 ```
 
-Execute as migrações:
+7. **Execute as migrações**: Peça ao Django que execute as migrações necessárias para rodar o aplicativo.
 ```bash
 poetry run python manage.py migrate
 ```
 
-Opcional: Crie um superuser (admin):
+8. **Opcional: Crie um superuser(admin)**: Você não precisa criar um superuser para que o aplicativo rode, mas a api é protegida e você precisará de um usuário para fazer o login e conseguir acessar as rotas.
 ```bash
 poetry run python manage.py createsuperuser
 ```
 
-Rode o servidor local:
+9. **Rode o servidor local**: 
 ```bash
 poetry run python manage.py runserver
 ```
-A API estará disponível em [http://localhost:8000](http://localhost:8000). Atenção, a página de entrada é vazia, vá para `/api` para ver a API.
 
-### Setup via Docker
+A API estará disponível em [http://localhost:8000](http://localhost:8000). Atenção, a página de entrada é vazia, vá para `/api` para ver a API. 
 
-Clone o repositório:
+Você não estará logado, faça o login com seu email e senha que designou ao criar o super user. Clicando em "Login" no canto superior direito da tela.
+
+#### Opção 2: set up via docker
+
+1. **Clone esse repositório**: para ter o código em sua máquina clone o repositório usando o comando abaixo.
 ```bash
 git clone https://github.com/juliavillela/lacrei-saude.git 
-cd lacrei-saude
-```
-Criar arquivo `.env` na raiz do projeto com um conteúdo semelhante a esse:
-```
-DJANGO_ENV = development
-SECRET_KEY = fakesecretkeyq-q8lxd-ys4-@l&yw-8d39vv-qrd5kqag!%5g
-POSTGRES_DB=lacrei_saude_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-ALLOWED_HOSTS=127.0.0.1,0.0.0.0,localhost
 ```
 
-Build da imagem:
+2. **Vá para a pasta raiz do projeto**
+```bash
+cd lacrei-saude
+```
+
+3. **Configure as variáveis de ambiente**: Copie o arquivo de exemplo `.env.example` para criar seu `.env` local. Se necessário, ajuste os valores das variáveis.
+```bash
+# macOS / Linux
+cp .env.example .env
+```
+
+```bash
+# Windows
+copy .env.example .env
+```
+
+
+4. **Faça o build da imagem**: (explicar)
 ```bash
 sudo docker compose build
 ```
 
-Suba o container:
+5. **Rode o container do Docker**: (explicar)
 ```bash
 sudo docker compose up
 ```
-A API estará disponível em [http://0.0.0.0:8000/](http://0.0.0.0:8000/). Atenção, a página de entrada é vazia, vá para `/api` para ver a API.
 
-### Execução dos Testes
+8. **Opcional: Crie um superuser(admin)**: Você não precisa criar um superuser para que o aplicativo rode, mas a api é protegida e você precisará de um usuário para fazer o login e conseguir acessar as rotas.
+   No comando abaixo, substitua `<container_id>` pelo ID ou nome do container da aplicação (ex.: `lacrei-saude`).
+```bash
+docker exec -it <container_id> python manage.py test
+```
 
-Localmente (sem Docker):
+A API estará disponível em [http://localhost:8000](http://localhost:8000). Atenção, a página de entrada é vazia, vá para `/api` para ver a API. 
+
+Você não estará logado, faça o login com seu email e senha que designou ao criar o super user. Clicando em "Login" no canto superior direito da tela.
+
+## Execução dos testes
+Com o aplicativo instalado em sua máquina seguindo os passo acima você pode rodar os testes com os passos abaixo:
+#### Opção 1: set up local (sem o Docker)
+
 ```bash
 poetry run python manage.py test
 ```
 
+#### Opção 2: set up via docker
+
+No comando abaixo, substitua `<container_id>` pelo ID ou nome do container da aplicação (ex.: `lacrei-saude`).
 ```bash
 docker exec -it <container_id> python manage.py test
 ```
+
 
 ##  Fluxo de Deploy (CI/CD)
 
 O processo de deploy é gerenciado por **GitHub Actions** com integração ao **AWS Elastic Beanstalk**:
 
 - **Branches**:
-    - `main`: ambiente de desenvolvimento. Commits nessa branch rodam **apenas testes e lint**, sem deploy.
-    - `staging`: Ao commitar nesta branch, o GitHub Actions executa **lint + testes** e realiza o **deploy automático** no ambiente de **staging** na AWS.
-    - `production`: Ao commitar nesta branch, o GitHub Actions executa **lint + testes** e realiza o **deploy automático** no ambiente de **produção** na AWS. 
+    - **`main`**: **CI apenas** (lint + testes).
+	- **`staging`**: CI + **deploy automático** para o EB _staging_.
+	- **`production`**: CI + **deploy automático** para o EB _production_.
 
-- **Pipeline**:
-    1. Rodar testes (Black, isort, Flake8 e Django TestCase).
-    2. Build da imagem Docker e push para Docker Hub.
-    3. Deploy no Elastic Beanstalk (AWS) de acordo com a branch. 
+- **Pipeline de CI/CD**:
+	1. **Lint e Testes**: black, isort, flake8, API TestCase.
+	2. **Build e Push da imagem Docker**.
+	3. **Gerar bundle do EB**: pin da imagem no `Dockerrun.aws.json` + zip do deploy (`Dockerrun.aws.json` + `.platform/`).
+	4. **Deploy no EB**: cria **versão** com rótulo identificável e atualiza o ambiente (staging/production).
 
+## Rollback de Deploy (Elastic Beanstalk)
+
+O projeto possui um workflow manual para **rollback** de deploys em **staging** e **production**, permitindo retornar o deploy  para uma versão anterior sem precisar refazer um build. Cada deploy cria uma nova **Application Version**  no Elastic Beanstalk e **Github Release**, identificadas por um **VERSION_LABEL** (`<sha8>-<YYYYMMDDHHMMSS>`).
+
+**passo a passo:**
+1. Acesse **Actions > EB Rollback > Run workflow**.
+2. Escolha o `environment` (`staging` ou `production`).
+3. Copie o `EB Version` desejado do corpo do Release anterior (exemplo: `45855a2b-20250930183157`).
+4. Cole o valor em `version_label` e clique em **Run workflow**.
 ## Justificativas Técnicas e Detalhes da implementação
-
-### Usuário Customizado
-Escolhi implementar um modelo customizado de usuário para autenticação via email, pois considero esse fluxo mais usual e seguro do que o padrão baseado em username.
+O projeto contém 3 aplicações: 
+- **Professionals**: Responsável pelos profissionais de saúde. contém os modelos e CRUD
+- **Appointments**: Responsável pelas consultas
+- **Accounts**: Responsável pelo modelo de usuário, criação dos tokens e validação
+### Contas 
+Escolhi implementar um modelo customizado de usuário para autenticação via email, pois considero esse fluxo mais usual e seguro do que o padrão baseado em username. Ao ser criado, através de um script de `signals`, cada usuário recebe um token simples (`rest_framework.authtoken`) que pode ser usado para chamadas à API.
 
 ### Profissionais de saúde `Professional`
 **Atributos**:
@@ -159,7 +233,7 @@ Escolhi implementar um modelo customizado de usuário para autenticação via em
 | **GET**    | `/api/professionals/<id>/` | Retorna os detalhes de um único profissional | Parâmetro de URL: `id`                                                                                                                                                                      |
 | **POST**   | `/api/professionals/`      | Cria um novo profissional                    | JSON body: `name`, `profession`, `contact`, `phone`, `email`, `street`, `number`, `complement`, `neighborhood`, `city`, `state`, `zipcode`                                                  |
 | **PATCH**  | `/api/professionals/<id>/` | Atualiza os dados de um profissional         | Parâmetro de URL: `id` JSON body (opcionais, exceto `id`): `name`, `profession`,  `contact`, `phone`, `email`, `street`, `number`, `complement`, `neighborhood`, `city`, `state`, `zipcode` |
-| **DELETE** | `/api/professionals/<id>/` | Exclui o profissional                        | -                                                                                                                                                                                           |
+| **DELETE** | `/api/professionals/<id>/` | Exclui o profissional                        |                                                                                                                                                                                             |
 ### Consultas `Appointments`
 **Atributos**:
 - **Profissional**(`professional`): Cada consulta está vinculada a um profissional via `ForeignKey` (`related_name="appointments"`).
@@ -174,10 +248,10 @@ Escolhi implementar um modelo customizado de usuário para autenticação via em
 - `professional`: **read-only**, usando `PartialProfessionalSerializer` (apenas `id`, `name` e `profession`) com o objetivo de melhorar a performance.
 #### Endpoints
 
-| Método     | Endpoint                   | Descrição                                                      | Body / Parâmetros                                                                            |
-| ---------- | -------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| **GET**    | `/api/appointments/`       | Lista todas as consultas com opção de filtrar por profissional | Filtro opcional: `?professional=ID`                                                          |
-| **GET**    | `/api/appointments/<id>/`  | Retorna os detalhes de uma consulta                            | Parâmetro de URL: `id`                                                                       |
-| **POST**   | `/api/appointments/`       | Cria uma nova consulta                                         | JSON body: `professional_id` (int), `scheduled_at` (datetime)                                |
-| **PATCH**  | `/api/professionals/<id>/` | Atualiza as informações de consulta                            | Parâmetro de URL: `id` JSON body (opcionais, exceto `id`): `professional_id`, `scheduled_at` |
-| **DELETE** | `/api/appointments/<id>/`  | Exclui a consulta                                              | Parâmetro de URL: `id`                                                                       |
+| Método     | Endpoint                  | Descrição                                                      | Body / Parâmetros                                                                            |
+| ---------- | ------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **GET**    | `/api/appointments/`      | Lista todas as consultas com opção de filtrar por profissional | Filtro opcional: `?professional=ID`                                                          |
+| **GET**    | `/api/appointments/<id>/` | Retorna os detalhes de uma consulta                            | Parâmetro de URL: `id`                                                                       |
+| **POST**   | `/api/appointments/`      | Cria uma nova consulta                                         | JSON body: `professional_id` (int), `scheduled_at` (datetime)                                |
+| **PATCH**  | `/api/appointments/<id>/` | Atualiza as informações de consulta                            | Parâmetro de URL: `id` JSON body (opcionais, exceto `id`): `professional_id`, `scheduled_at` |
+| **DELETE** | `/api/appointments/<id>/` | Exclui a consulta                                              | Parâmetro de URL: `id`                                                                       |
