@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "django_filters",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
     "accounts",
     "professionals",
     "appointments",
@@ -111,6 +113,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # Password validation
@@ -194,4 +197,13 @@ LOGGING = {
             "propagate": True,
         },
     },
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Lacrei Saúde API",
+    "DESCRIPTION": "API para gestão de profissionais e agendamentos.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SECURITY": [{"TokenAuth": []}],
+    "COMPONENT_SPLIT_REQUEST": True,
 }
