@@ -204,6 +204,39 @@ class ProfessionalApiTest(APITestCase):
             Professional.ProfessionChoices.GENERAL_PRACTITIONER,
         )
 
+    def test_full_update_professional(self):
+        data = self.make_professional_data(
+            name=" Maria Oliveira ",
+            phone="(21) 99999-8888 ",
+            zipcode="12345-678 ",
+            email="  MARIA@EXAMPLE.COM  ",
+            )
+        response = self.client.put(self.detail_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.professional.refresh_from_db()
+        self.assertEqual(self.professional.name, "Maria Oliveira")
+        self.assertEqual(self.professional.phone, "21999998888")
+        self.assertEqual(self.professional.zipcode, "12345678")
+        self.assertEqual(self.professional.email, "maria@example.com")
+    
+    def test_full_update_professional_requres_all_fields(self):
+        data = self.make_professional_data()
+        del data["profession"]
+        response = self.client.put(self.detail_url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("profession", response.data)
+        self.professional.refresh_from_db()
+        self.assertEqual(
+            self.professional.profession,
+            Professional.ProfessionChoices.GENERAL_PRACTITIONER,
+        )
+
+    def test_full_update_professional_not_found(self):
+        url = reverse("professional-detail", args=[999])
+        data = self.make_professional_data()
+        response = self.client.put(url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
     def test_delete_professional(self):
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

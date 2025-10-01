@@ -208,6 +208,54 @@ class AppointmentApiTest(APITestCase):
         response = self.client.patch(url, data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_full_update_appointment(self):
+        other_professional = Professional.objects.create(
+            name="Tereza Souza",
+            profession=Professional.ProfessionChoices.CARDIOLOGIST,
+            street="Rua das Palmeiras",
+            number="456",
+            complement="Ap. 2",
+            neighborhood="Bela Vista",
+            city="Curitiba",
+            state="PR",
+            zipcode="87654321",
+            phone="4198887777",
+            email="tereza@email.com",
+        )        
+        tomorrow = timezone.now() + datetime.timedelta(days=1)
+        data = {
+            "professional_id": other_professional.id,
+            "scheduled_at": tomorrow.isoformat(),
+        }
+        response = self.client.put(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.appointment.refresh_from_db()
+        self.assertEqual(
+            self.appointment.scheduled_at,
+            tomorrow,
+        )
+        self.assertEqual(self.appointment.professional, other_professional)
+
+    def test_full_update_appointment_requires_all_fields(self):
+        today = timezone.now() + datetime.timedelta(days=1)
+        data = {"scheduled_at": today.isoformat()}
+        response = self.client.put(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("professional_id", response.data)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.scheduled_at, self.time)
+        self.assertEqual(self.appointment.professional, self.professional)
+    
+    def test_full_update_appointment_not_found(self):
+        tomorrow = timezone.now() + datetime.timedelta(days=1)
+        url = reverse("appointment-detail", args=[999])
+        data = {
+            "professional_id": self.professional.id,
+            "scheduled_at": tomorrow.isoformat(),
+        }
+        response = self.client.put(url, data)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        
     def test_delete_appointment(self):
         response = self.client.delete(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
