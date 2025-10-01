@@ -91,3 +91,4 @@ class PartialProfessionalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Professional
         fields = ["id", "name", "profession"]
+        read_only_fields = ["id", "name", "profession"]
