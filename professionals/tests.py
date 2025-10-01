@@ -31,6 +31,19 @@ class ProfessionalApiTest(APITestCase):
             phone="2111112222",
             email="alice@example.com",
         )
+        self.write_only_fields = [
+            "street",
+            "number",
+            "complement",
+            "neighborhood",
+            "city",
+            "state",
+            "zipcode",
+            "phone",
+            "email",
+        ]
+        self.read_only_fields = ["address", "contact"]
+
         self.list_url = reverse("professional-list")
         self.detail_url = reverse("professional-detail", args=[self.professional.id])
 
@@ -54,32 +67,31 @@ class ProfessionalApiTest(APITestCase):
     def test_list_professionals(self):
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Pagination fields are present
+        self.assertIn("count", response.data)
+        self.assertIn("next", response.data)
+        self.assertIn("previous", response.data)
+
+        self.assertIn("results", response.data)
         results = response.data["results"]
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["name"], "Alice dos Santos")
+        item = results[0]
+        for field in self.read_only_fields:
+            self.assertIn(field, item)
+        for field in self.write_only_fields:
+            self.assertNotIn(field, item)
+
+        self.assertEqual(item["name"], "Alice dos Santos")
 
     def test_retrieve_professional(self):
         response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["name"], "Alice dos Santos")
 
-        # Read only fields are included
-        self.assertIn("address", response.data)
-        self.assertIn("contact", response.data)
+        for field in self.read_only_fields:
+            self.assertIn(field, response.data)
 
-        # Write only fields are not included
-        write_only_fields = [
-            "street",
-            "number",
-            "complement",
-            "neighborhood",
-            "city",
-            "state",
-            "zipcode",
-            "phone",
-            "email",
-        ]
-        for field in write_only_fields:
+        for field in self.write_only_fields:
             self.assertNotIn(field, response.data)
 
     def test_retrieve_professional_not_found(self):
