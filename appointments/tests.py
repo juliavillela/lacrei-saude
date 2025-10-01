@@ -262,6 +262,77 @@ class AppointmentApiTest(APITestCase):
         self.assertEqual(self.appointment.scheduled_at, self.time)
         self.assertEqual(self.appointment.professional, self.professional)
     
+    def test_full_update_appointment_rejects_empty_required_fields(self):
+        later_today = timezone.now() + datetime.timedelta(hours=1)
+        data = {"professional_id":"", "scheduled_at":later_today.isoformat()}
+        response = self.client.put(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.professional, self.professional)
+        self.assertEqual(self.appointment.scheduled_at, self.time)
+
+    def test_full_update_appointment_rejects_non_existing_professional_id(self):
+        data = {"professional_id": 999}
+        response = self.client.put(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.professional, self.professional)
+
+    def test_full_update_appointment_rejects_scheduled_at_in_the_past(self):
+        yesterday = timezone.now() - datetime.timedelta(days=1)
+        data = {
+            "professional_id": self.professional.id,
+            "scheduled_at": yesterday.isoformat()
+        }
+        response = self.client.put(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.scheduled_at, self.time)
+
+    def test_full_update_appointment_rejects_double_booking(self):
+        # Create another appointment at a different time
+        another_time = self.time + datetime.timedelta(hours=1)
+        Appointment.objects.create(
+            professional=self.professional, scheduled_at=another_time
+        )
+        # Try to update the first appointment to the same time as the second
+        data = {
+            "professional_id": self.professional.id,
+            "scheduled_at": another_time.isoformat(),
+        }
+        response = self.client.put(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.scheduled_at, self.time)
+
+        # Create an appointment with a different professional at the same time
+        another_professional = Professional.objects.create(
+            name="Ana Pereira",
+            profession=Professional.ProfessionChoices.DERMATOLOGIST,
+            street="Rua das Flores",
+            number="789",
+            complement="Ap. 10",
+            neighborhood="Jardim",
+            city="São Paulo",
+            state="SP",
+            zipcode="98765432",
+            phone="3199998888",
+            email="ana@email.com",
+        )
+        Appointment.objects.create(
+            professional=another_professional, scheduled_at=self.time
+        )
+
+        # Try to update the first appointment to the same professional as the second
+        data = {
+            "professional_id": another_professional.id,
+            "scheduled_at": self.time
+            }
+        response = self.client.patch(self.detail_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.appointment.refresh_from_db()
+        self.assertEqual(self.appointment.professional, self.professional)
+
     def test_full_update_appointment_not_found(self):
         tomorrow = timezone.now() + datetime.timedelta(days=1)
         url = reverse("appointment-detail", args=[999])
